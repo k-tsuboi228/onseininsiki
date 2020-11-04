@@ -7,7 +7,6 @@ import android.os.Bundle;
 import android.speech.RecognitionListener;
 import android.speech.RecognizerIntent;
 import android.speech.SpeechRecognizer;
-import android.util.Log;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.ImageView;
@@ -19,8 +18,7 @@ public class MainActivity extends AppCompatActivity{
 
     ListView listView;
     ImageView imageview;
-    ArrayList data;
-    ArrayList<String> soundResult;
+    ArrayList<String> data;
 
     Intent intent;
     SpeechRecognizer recognizer;
@@ -37,7 +35,6 @@ public class MainActivity extends AppCompatActivity{
         if(getPackageManager().queryIntentActivities(new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH),0).size() == 0){
             return;
         }
-
     }
 
     @Override
@@ -48,16 +45,26 @@ public class MainActivity extends AppCompatActivity{
     @Override
     protected void onPause() {
         super.onPause();
+
     }
 
-    public void onClick(View view){
-        /*switch(view.getId()){*/
-        switch(code){
-          //  case R.id.mic1:
+ /*   protected void stopListening(){
+        if(recognizer != null){
+            recognizer.destroy();
+        }
+        recognizer = null;
+    }
+ */
+   /* public void restartListening(){
+        recognizer.stopListening();
+        recognizer.startListening(intent);
+    }
+*/
+    public void onClick(View view) {
+        switch (code) {
             case 0:
                 code++;
-
-                if(getPackageManager().queryIntentActivities(new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH),0).size() == 0){
+                if (getPackageManager().queryIntentActivities(new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH), 0).size() == 0) {
                     return;
                 }
 
@@ -67,11 +74,11 @@ public class MainActivity extends AppCompatActivity{
                 intent.putExtra(RecognizerIntent.EXTRA_CALLING_PACKAGE, this.getPackageName());
 
                 recognizer = SpeechRecognizer.createSpeechRecognizer(this);
-                recognizer.setRecognitionListener(new RecognitionListener(){
+                recognizer.setRecognitionListener(new RecognitionListener() {
 
                     @Override
                     public void onReadyForSpeech(Bundle bundle) {
-                        Toast.makeText(getApplicationContext(), "話してください", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(getApplicationContext(), "音声を入力してください", Toast.LENGTH_SHORT).show();
                     }
 
                     @Override
@@ -81,12 +88,10 @@ public class MainActivity extends AppCompatActivity{
 
                     @Override
                     public void onRmsChanged(float v) {
-
                     }
 
                     @Override
                     public void onBufferReceived(byte[] bytes) {
-
                     }
 
                     @Override
@@ -95,29 +100,24 @@ public class MainActivity extends AppCompatActivity{
                     }
 
                     @Override
-                    public void onResults(Bundle results){
-                        data = results.getStringArrayList(android.speech.SpeechRecognizer.RESULTS_RECOGNITION);
-                        Log.v("onseidata", String.valueOf(data));
+                    public void onResults(Bundle results) {
 
-                        if(data.size() > 10){
+                        //ArrayAdapter<String> adapter = new ArrayAdapter<>(MainActivity.this, android.R.layout.simple_list_item_1, data);
+                        data = results.getStringArrayList(android.speech.SpeechRecognizer.RESULTS_RECOGNITION);
+                       // listView.setAdapter(adapter);
+
+                        if (data.size() > 10) {
                             data.remove(0);
                         }
-
-                        String resultsString = "";
-                        for (int i = 0; i < results.size(); i++) {
-                            resultsString += data.get(i) + ";";
-                        }
-                        soundResult.add(resultsString);
+                      //  restartListening();
                     }
 
                     @Override
                     public void onPartialResults(Bundle bundle) {
-
                     }
 
                     @Override
                     public void onEvent(int i, Bundle bundle) {
-
                     }
 
                     public void onError(int error) {
@@ -162,23 +162,18 @@ public class MainActivity extends AppCompatActivity{
                                 reason = "ERROR_SPEECH_TIMEOUT";
                                 break;
                         }
+                       // restartListening();
                         Toast.makeText(getApplicationContext(), reason, Toast.LENGTH_SHORT).show();
                     }
                 });
                 recognizer.startListening(intent);
                 break;
             case 1:
-           // case R.id.mic2:
                 code--;
-                if(soundResult != null) {
-                    ArrayAdapter adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, soundResult);
-                    Log.v("onseidata", String.valueOf(soundResult));
+                if(data != null) {
+                    ArrayAdapter<String> adapter = new ArrayAdapter<>(getApplicationContext(), R.layout.list, data);
                     listView.setAdapter(adapter);
-                }else{
-                    break;
                 }
-
-                recognizer.stopListening();
                 break;
         }
     }
