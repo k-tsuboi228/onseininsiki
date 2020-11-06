@@ -11,14 +11,17 @@ import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.ImageView;
 import android.widget.ListView;
+import android.widget.TextView;
 import android.widget.Toast;
 import java.util.ArrayList;
 
 public class MainActivity extends AppCompatActivity{
 
     ListView listView;
+    TextView textView;
     ImageView imageview;
     ArrayList<String> data;
+    ArrayList<String> text = new ArrayList<>();
 
     Intent intent;
     SpeechRecognizer recognizer;
@@ -30,11 +33,9 @@ public class MainActivity extends AppCompatActivity{
         setContentView(R.layout.activity_main);
 
         listView=findViewById(R.id.list);
+        textView=findViewById(R.id.text);
         imageview=findViewById(R.id.mic1);
 
-        if(getPackageManager().queryIntentActivities(new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH),0).size() == 0){
-            return;
-        }
     }
 
     @Override
@@ -45,31 +46,22 @@ public class MainActivity extends AppCompatActivity{
     @Override
     protected void onPause() {
         super.onPause();
-
+        code = 0;
+        text.remove(text.size()-1);
     }
 
- /*   protected void stopListening(){
-        if(recognizer != null){
-            recognizer.destroy();
-        }
-        recognizer = null;
-    }
- */
-   /* public void restartListening(){
-        recognizer.stopListening();
-        recognizer.startListening(intent);
-    }
-*/
     public void onClick(View view) {
         switch (code) {
             case 0:
                 code++;
+                Toast.makeText(getApplicationContext(), "音声認識開始", Toast.LENGTH_SHORT).show();
                 if (getPackageManager().queryIntentActivities(new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH), 0).size() == 0) {
                     return;
                 }
 
                 intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
                 intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
+                intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, "ja-JP");
                 intent.putExtra(RecognizerIntent.EXTRA_PREFER_OFFLINE, true);
                 intent.putExtra(RecognizerIntent.EXTRA_CALLING_PACKAGE, this.getPackageName());
 
@@ -78,7 +70,6 @@ public class MainActivity extends AppCompatActivity{
 
                     @Override
                     public void onReadyForSpeech(Bundle bundle) {
-                        Toast.makeText(getApplicationContext(), "音声を入力してください", Toast.LENGTH_SHORT).show();
                     }
 
                     @Override
@@ -102,14 +93,19 @@ public class MainActivity extends AppCompatActivity{
                     @Override
                     public void onResults(Bundle results) {
 
-                        //ArrayAdapter<String> adapter = new ArrayAdapter<>(MainActivity.this, android.R.layout.simple_list_item_1, data);
                         data = results.getStringArrayList(android.speech.SpeechRecognizer.RESULTS_RECOGNITION);
-                       // listView.setAdapter(adapter);
 
-                        if (data.size() > 10) {
-                            data.remove(0);
+                        text.add(text.size(), data.get(0));
+                        if (text.size() > 10) {
+                            text.remove(0);
                         }
-                      //  restartListening();
+
+                       /* ArrayAdapter<String> adapter = new ArrayAdapter<>(getApplicationContext(), R.layout.list, text);
+                        listView.setAdapter(adapter);
+*/
+                        recognizer.stopListening();
+                        recognizer.startListening(intent);
+
                     }
 
                     @Override
@@ -162,18 +158,22 @@ public class MainActivity extends AppCompatActivity{
                                 reason = "ERROR_SPEECH_TIMEOUT";
                                 break;
                         }
-                       // restartListening();
-                        Toast.makeText(getApplicationContext(), reason, Toast.LENGTH_SHORT).show();
+                      //  Toast.makeText(getApplicationContext(), reason, Toast.LENGTH_SHORT).show();
                     }
                 });
                 recognizer.startListening(intent);
                 break;
             case 1:
                 code--;
+                Toast.makeText(getApplicationContext(), "音声認識終了", Toast.LENGTH_SHORT).show();
                 if(data != null) {
-                    ArrayAdapter<String> adapter = new ArrayAdapter<>(getApplicationContext(), R.layout.list, data);
+                    ArrayAdapter<String> adapter = new ArrayAdapter<>(getApplicationContext(), R.layout.list, text);
                     listView.setAdapter(adapter);
+                }else{
+                    break;
                 }
+
+               recognizer.stopListening();
                 break;
         }
     }
